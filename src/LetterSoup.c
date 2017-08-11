@@ -4,7 +4,7 @@
  Author      : César Vargas
  Version     :
  Copyright   : Your copyright notice
- Description : Hello World in C, Ansi-style
+ Description : Letter Soup in C, Ansi-style
  ============================================================================
  */
 
@@ -14,10 +14,10 @@
 
 void ReadWords();
 void WriteMatrix();
-void Vertical();
-void Horizontal();
-void Diagonal();
-void (*p[3])() = {Vertical, Horizontal, Diagonal};
+void Vertical	(int WordNumber, int WordSize, int MatrixPositionX, int MatrixPositionY, int WordDirection);
+void Horizontal	(int WordNumber, int WordSize, int MatrixPositionX, int MatrixPositionY, int WordDirection);
+void Diagonal	(int WordNumber, int WordSize, int MatrixPositionX, int MatrixPositionY, int WordDirection);
+void (*p[3])	(int WordNumber, int WordSize, int MatrixPositionX, int MatrixPositionY, int WordDirection) = {Vertical, Horizontal, Diagonal};
 void FillMatrix();
 
 char Words[5][10] = {"          ","          ","          ","          ","          "};
@@ -31,7 +31,6 @@ int main(void)
 
 	return EXIT_SUCCESS;
 }
-
 void ReadWords()
 {
 	FILE *fp;
@@ -52,8 +51,8 @@ void ReadWords()
 	while( ( ch = fgetc(fp) ) != EOF && x < 5 )
 	{
 		Words[x][y] = ch;
-		y++;
 	    printf("%c",ch);
+		y++;
 
 	    // When a word is stored in Words array or 10 letters has been stored in the current word, it continues with next word
 	    if(ch == '\n' || y == 10)
@@ -78,45 +77,89 @@ void WriteMatrix()
 	    exit(EXIT_FAILURE);
 	}
 
-	for(int x=0; x<10; x++)
+	for(int y=0; y<10; y++)
 	{
 		fprintf(fp, "\n\t");
 
-		for(int y=0; y<10; y++)
+		for(int x=0; x<10; x++)
 		{
-			if(Matrix[x][y] == ' ')	fprintf(fp, "-\t");
-			else			fprintf(fp, "%c\t", Matrix[x][y]);
+			if(Matrix[x][y] == ' ')	fprintf(fp, "- ");
+			else			fprintf(fp, "%c ", Matrix[x][y]);
 		}
 	}
 
 	fclose(fp);
 }
-void Vertical()
+void Vertical	(int WordNumber, int WordSize, int MatrixPositionX, int MatrixPositionY, int WordDirection)
 {
-	printf("Vertical\n");
+	printf("Vertical\t WordNumber: %d\t WordSize: %d\t X: %d\t Y: %d\t Direction: %d\t\n", WordNumber, WordSize, MatrixPositionX, MatrixPositionY, WordDirection);
+
+	for(int z=0 ; z<WordSize ; z++)
+	{
+		Matrix[MatrixPositionX][MatrixPositionY] = Words[WordNumber][z];
+
+		if(WordDirection == 1)	MatrixPositionY++;
+		else					MatrixPositionY--;
+	}
 }
-void Horizontal()
+void Horizontal	(int WordNumber, int WordSize, int MatrixPositionX, int MatrixPositionY, int WordDirection)
 {
-	printf("Horizontal\n");
+	printf("Horizontal\t WordNumber: %d\t WordSize: %d\t X: %d\t Y: %d\t Direction: %d\t\n", WordNumber, WordSize, MatrixPositionX, MatrixPositionY, WordDirection);
+
+	for(int z=0 ; z<WordSize ; z++)
+	{
+		Matrix[MatrixPositionX][MatrixPositionY] = Words[WordNumber][z];
+
+		if(WordDirection == 1)	MatrixPositionX++;
+		else					MatrixPositionX--;
+	}
 }
-void Diagonal()
+void Diagonal	(int WordNumber, int WordSize, int MatrixPositionX, int MatrixPositionY, int WordDirection)
 {
-	printf("Diagonal\n");
+	printf("Diagonal\t WordNumber: %d\t WordSize: %d\t X: %d\t Y: %d\t Direction: %d\t\n", WordNumber, WordSize, MatrixPositionX, MatrixPositionY, WordDirection);
+
+	for(int z=0 ; z<WordSize ; z++)
+	{
+		Matrix[MatrixPositionX][MatrixPositionY] = Words[WordNumber][z];
+
+		if		(WordDirection == 2)
+		{
+			MatrixPositionX++;
+			MatrixPositionY++;
+		}
+		else if	(WordDirection == 1)
+		{
+			MatrixPositionX++;
+			MatrixPositionY--;
+		}
+		else if	(WordDirection == -1)
+		{
+			MatrixPositionX--;
+			MatrixPositionY++;
+		}
+		else if	(WordDirection == -2)
+		{
+			MatrixPositionX--;
+			MatrixPositionY--;
+		}
+	}
 }
 void FillMatrix()
 {
 	int WordSize[5];
 
-	// Get the size of all words
+	/********************************
+	*	Get the size of all words	*
+	********************************/
+
 	for(int x=0; x<5; x++)
 	{
-		for(int y=0; y<10; y++)
+		for(int y=1; y<=10; y++)
 		{
-			if(Words[x][y] == '\n')
+			if(Words[x][y] == '\n' || y == 10)
 			{
 				WordSize[x] = y;
-				printf("%d ", y);
-				y = 10;
+				y = 11;
 			}
 		}
 	}
@@ -124,13 +167,118 @@ void FillMatrix()
 	// initialize random seed
 	srand(time(NULL));
 
-	// Select the position of word in matrix
-	//int x = rand()%10;
-	//int y = rand()%10;
-
-	for(int x=0 ; x< 5 ; x++)
+	for(int x=0 ; x<5 ; x++)
 	{
-		// Select the position of word in matrix
-		(*p[rand()%3])();
+		// It uses to finished do...while when a word fit into the matrix
+		int WordSuccessfullyAssigned = 0;
+
+		do
+		{
+			// Select random position of word in matrix
+			int MatrixPositionX = rand() % 10;
+			int MatrixPositionY = rand() % 10;
+
+			// Select random word orientation
+			int WordOrientation = rand() %  3;
+			int WordDirection 	= 0;
+
+			// Spaces inside matrix that can be occupied
+			int SpacesPX = abs(MatrixPositionX-10);
+			int SpacesNX = MatrixPositionX+1;
+			int SpacesPY = abs(MatrixPositionY-10);
+			int SpacesNY = MatrixPositionY+1;
+
+			// This flag is used to know when a word fit in the matrix
+			int WordMatrizFit	= 1;
+
+			/****************************************************************************
+			*	if random position is empty then proceed to find the direction of word	*
+			****************************************************************************/
+
+			if(Matrix[MatrixPositionX][MatrixPositionY] == ' ')
+			{
+				if	   (WordOrientation == 0) 	// Vertical
+				{
+					if		(SpacesPY >= WordSize[x])	WordDirection =  1;
+					else if	(SpacesNY >= WordSize[x])	WordDirection = -1;
+				}
+				else if(WordOrientation == 1)	// Horizontal
+				{
+					if		(SpacesPX >= WordSize[x])	WordDirection =  1;
+					else if	(SpacesNX >= WordSize[x])	WordDirection = -1;
+				}
+				else if(WordOrientation == 2)	// Diagonal
+				{
+					if		((SpacesPY >= WordSize[x]) && (SpacesPX >= WordSize[x])) 	WordDirection =   2;
+					else if	((SpacesNY >= WordSize[x]) && (SpacesPX >= WordSize[x])) 	WordDirection =   1;
+					else if	((SpacesPY >= WordSize[x]) && (SpacesNX >= WordSize[x])) 	WordDirection =  -1;
+					else if	((SpacesNY >= WordSize[x]) && (SpacesNX >= WordSize[x])) 	WordDirection =  -2;
+				}
+			}
+
+			/************************************************************************************
+			*	if found a word position and word direction that fits in matrix,				*
+			*	verifies if spaces that will take are empty or can be shared with same letter	*
+			************************************************************************************/
+
+			if(WordDirection != 0)
+			{
+				int CopyMatrixPositionY = MatrixPositionY;
+				int CopyMatrixPositionX = MatrixPositionX;
+
+				for(int z=0 ; z<WordSize[x] ; z++)
+				{
+					if( Matrix[CopyMatrixPositionX][CopyMatrixPositionY] == ' ' ||
+						Matrix[CopyMatrixPositionX][CopyMatrixPositionY] == Words[x][z])
+					{
+						if	   (WordOrientation == 0) 	// Vertical
+						{
+							if(WordDirection == 1)	CopyMatrixPositionY++;
+							else					CopyMatrixPositionY--;
+						}
+						else if(WordOrientation == 1)	// Horizontal
+						{
+							if(WordDirection == 1)	CopyMatrixPositionX++;
+							else					CopyMatrixPositionX--;
+						}
+						else if(WordOrientation == 2)	// Diagonal
+						{
+							if		(WordDirection == 2)
+							{
+								CopyMatrixPositionX++;
+								CopyMatrixPositionY++;
+							}
+							else if	(WordDirection == 1)
+							{
+								CopyMatrixPositionX++;
+								CopyMatrixPositionY--;
+							}
+							else if	(WordDirection == -1)
+							{
+								CopyMatrixPositionX--;
+								CopyMatrixPositionY++;
+							}
+							else if	(WordDirection == -2)
+							{
+								CopyMatrixPositionX--;
+								CopyMatrixPositionY--;
+							}
+						}
+					}
+					else
+					{
+						WordMatrizFit	= 0;
+						z = WordSize[x]+1;
+					}
+				}
+
+				if(WordMatrizFit)
+				{
+					(*p[WordOrientation])(x, WordSize[x], MatrixPositionX, MatrixPositionY, WordDirection);
+					WordSuccessfullyAssigned = 1;
+				}
+			}
+		}
+		while(!WordSuccessfullyAssigned);
 	}
 }

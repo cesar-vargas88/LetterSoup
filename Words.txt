@@ -1,5 +1,5 @@
-UEFI
-Intel
-ARM
-Word
-Program
+firmware
+arm
+bios
+intel
+program
